@@ -65,8 +65,8 @@ class DataLoader:
 
             corpus = [
                 {
-                    "doc_id": item.get("id"),
-                    "text": item.get("text")
+                    "doc_id": item.get("id") or item.get("docid") or item.get("doc_id"),
+                    "text": item.get("text") or item.get("content")
                 }
                 for item in data
             ]
@@ -101,8 +101,8 @@ class DataLoader:
 
             queries = [
                 {
-                    "query_id": item.get("id"),
-                    "query": item.get("text")
+                    "query_id": item.get("id") or item.get("qid"),
+                    "query": item.get("text") or item.get("query")
                 }
                 for item in data
             ]
