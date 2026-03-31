@@ -63,16 +63,35 @@ class DataLoader:
             corpus_file = self.find_file("corpus")
             data = self.load_json(corpus_file)
 
-            corpus = [
-                {
-                    "doc_id": item.get("docid") or item.get("doc_id"),
-                    "text": item.get("text") or item.get("content")
-                }
-                for item in data
-            ]
+            corpus = []
+            missing_count = 0
+
+            for item in data:
+                if item is None:
+                    missing_count += 1
+                    continue
+
+                doc_id = item.get("docid") or item.get("doc_id")
+                text = item.get("text") or item.get("content")
+
+                if doc_id is None or text is None:
+                    missing_count += 1
+                    continue
+
+                text = str(text).strip()
+                if text == "":
+                    missing_count += 1
+                    continue
+
+                corpus.append({
+                    "doc_id": str(doc_id),
+                    "text": text
+                })
 
             df = pd.DataFrame(corpus)
             logging.info(f"Corpus shape: {df.shape}")
+            if missing_count > 0:
+                logging.warning(f"Skipped {missing_count} corpus entries with missing or empty text")
             return df
 
         except Exception as e:
