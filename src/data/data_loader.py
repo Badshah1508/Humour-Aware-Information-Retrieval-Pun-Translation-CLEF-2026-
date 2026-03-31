@@ -140,7 +140,15 @@ class DataLoader:
                     qrels_list.append({
                         "query_id": str(item.get("query_id") or item.get("qid")),
                         "doc_id": str(item.get("doc_id") or item.get("docid")),
-                        "relevance": int(item.get("relevance") or item.get("label") or 0)
+                        "relevance": int(
+                            item.get("relevance")
+                            if item.get("relevance") is not None
+                            else item.get("label")
+                            if item.get("label") is not None
+                            else item.get("qrel")
+                            if item.get("qrel") is not None
+                            else 0
+                        )
                     })
 
             df = pd.DataFrame(qrels_list)

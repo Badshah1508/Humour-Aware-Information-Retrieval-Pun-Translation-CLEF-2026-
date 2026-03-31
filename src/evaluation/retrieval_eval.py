@@ -133,10 +133,10 @@ class AdvancedEvaluator:
             qrels = self.prepare_qrels()
             results = self.prepare_results()
             
-            # 👇 PUT HERE
+            #  PUT HERE
             sample_qid = list(qrels.keys())[0]
 
-            print("\n🔍 DEBUG CHECK:")
+            print("\n DEBUG CHECK:")
             print("Qrels docs:", list(qrels[sample_qid].keys())[:5])
             print("Results docs:", [d for d, _ in results.get(sample_qid, [])])
 
@@ -191,7 +191,7 @@ if __name__ == "__main__":
         TASK = "task1_retrieval"
         LANGUAGE = "english"
 
-        print("\n📊 Starting Evaluation...\n")
+        print("\n Starting Evaluation...\n")
 
         from src.data.data_loader import DataLoader
 
@@ -204,7 +204,7 @@ if __name__ == "__main__":
         qrels_df["relevance"] = qrels_df["relevance"].fillna(0)
 
         # Choose which result to evaluate
-        RESULT_FILE = "bm25_results.json"  # 🔁 change to rm3_results.json if needed
+        RESULT_FILE = "rm3_results.json"  #  change to rm3_results.json if needed
 
         results_path = os.path.join(
             "results", TASK, LANGUAGE, RESULT_FILE
@@ -223,7 +223,7 @@ if __name__ == "__main__":
         evaluator = AdvancedEvaluator(qrels_df, results_list)
         scores = evaluator.evaluate()
 
-        print("\n✅ FINAL Evaluation Results:")
+        print("\n FINAL Evaluation Results:")
         for k, v in scores.items():
             print(f"{k}: {v:.4f}")
 

@@ -148,19 +148,19 @@ if __name__ == "__main__":
         corpus_df = data["corpus"]
         queries_df = data["queries"]
 
-        # 🔥 PASTE HERE
+        #  PASTE HERE
         qrel_doc_ids = set(data["qrels"]["doc_id"].astype(str))
 
         corpus_df = corpus_df[
             corpus_df["doc_id"].astype(str).isin(qrel_doc_ids)
-        ]
+        ].copy()
 
         print("Filtered corpus size:", len(corpus_df))
 
         pre = TextPreprocessor()
 
-        corpus = pre.preprocess_dataframe(data["corpus"], "text")
-        queries = pre.preprocess_dataframe(data["queries"], "query")
+        corpus = pre.preprocess_dataframe(corpus_df.copy(), "text")
+        queries = pre.preprocess_dataframe(queries_df.copy(), "query")
 
         # -------------------------
         # BM25
