@@ -65,7 +65,7 @@ class DataLoader:
 
             corpus = [
                 {
-                    "doc_id": item.get("id") or item.get("docid") or item.get("doc_id"),
+                    "doc_id": item.get("docid") or item.get("doc_id"),
                     "text": item.get("text") or item.get("content")
                 }
                 for item in data
@@ -83,55 +83,74 @@ class DataLoader:
     # -----------------------------
     def load_queries(self):
         try:
-            # Try multiple possible keywords
-            possible_keywords = ["query", "queries", "topic", "question"]
-
+            # 🔥 ALWAYS use train queries (to match qrels)
             query_file = None
-            for keyword in possible_keywords:
-                try:
-                    query_file = self.find_file(keyword)
+
+            for f in self.files:
+                if "queries_train" in f.lower():
+                    query_file = f
                     break
-                except:
-                    continue
 
             if query_file is None:
-                raise FileNotFoundError("No query file found")
+                raise FileNotFoundError("queries_train file not found")
 
             data = self.load_json(query_file)
 
             queries = [
                 {
-                    "query_id": item.get("id") or item.get("qid"),
+                    "query_id": str(item.get("id") or item.get("qid")),
                     "query": item.get("text") or item.get("query")
                 }
                 for item in data
             ]
 
             df = pd.DataFrame(queries)
-            logging.info(f"Queries loaded from {query_file}, shape: {df.shape}")
+
+            print(f"\n✅ Using query file: {query_file}")
+            print("Total queries:", df.shape[0])
+
             return df
 
         except Exception as e:
             raise CustomException(e, sys)
-
+        
     # -----------------------------
     # Load Qrels
     # -----------------------------
     def load_qrels(self):
         try:
             qrels_file = self.find_file("qrels")
-            file_path = os.path.join(self.base_path, qrels_file)
+            data = self.load_json(qrels_file)
 
-            qrels = pd.read_csv(
-                file_path,
-                sep=r"\s+",
-                names=["query_id", "unused", "doc_id", "relevance"]
-            )
+            qrels_list = []
 
-            qrels = qrels[["query_id", "doc_id", "relevance"]]
+            # 🔥 CASE 1: Dict format (MOST COMMON in CLEF)
+            if isinstance(data, dict):
+                for qid, docs in data.items():
+                    for doc_id, rel in docs.items():
+                        qrels_list.append({
+                            "query_id": str(qid),
+                            "doc_id": str(doc_id),
+                            "relevance": int(rel)
+                        })
 
-            logging.info(f"Qrels shape: {qrels.shape}")
-            return qrels
+            # 🔥 CASE 2: List format
+            elif isinstance(data, list):
+                for item in data:
+                    qrels_list.append({
+                        "query_id": str(item.get("query_id") or item.get("qid")),
+                        "doc_id": str(item.get("doc_id") or item.get("docid")),
+                        "relevance": int(item.get("relevance") or item.get("label") or 0)
+                    })
+
+            df = pd.DataFrame(qrels_list)
+
+            print("\n✅ Qrels Loaded:")
+            print("Total rows:", len(df))
+            print("Unique queries:", df["query_id"].nunique())
+
+            logging.info(f"Qrels shape: {df.shape}")
+            return df
 
         except Exception as e:
             raise CustomException(e, sys)
