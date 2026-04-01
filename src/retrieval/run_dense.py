@@ -18,7 +18,7 @@ if __name__ == "__main__":
         corpus = data["corpus"].to_dict(orient="records")
         queries_df = data["queries"]
         query_texts = queries_df["query"].astype(str).tolist()
-        query_ids = [f"q{i+1}" for i in range(len(query_texts))]
+        query_ids = queries_df["query_id"].astype(str).tolist()
 
         logging.info(f"Corpus size: {len(corpus)}")
         logging.info(f"Total queries: {len(query_texts)}")

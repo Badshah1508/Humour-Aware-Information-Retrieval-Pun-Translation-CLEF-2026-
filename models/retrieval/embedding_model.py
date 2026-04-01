@@ -1,4 +1,11 @@
-from sentence_transformers import SentenceTransformer
+try:
+    from sentence_transformers import SentenceTransformer
+except ModuleNotFoundError as e:
+    raise ModuleNotFoundError(
+        "Missing dependency: sentence-transformers is required for dense retrieval. "
+        "Install it with `pip install sentence-transformers` and retry."
+    ) from e
+
 
 class EmbeddingModel:
     def __init__(self, model_name="all-MiniLM-L6-v2"):
