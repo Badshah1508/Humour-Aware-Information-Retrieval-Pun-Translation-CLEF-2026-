@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-from src.logger import logging   # ✅ logging added
+from src.logger import logging  
 
 
 class DenseRetriever:
@@ -48,7 +48,7 @@ class DenseRetriever:
 
         logging.info("Corpus encoding completed successfully.")
 
-    def search(self, queries, top_k=10):
+    def search(self, queries, top_k=10, query_ids=None):
         logging.info("Starting query encoding for dense retrieval...")
 
         query_embeddings = self.embedding_model.encode_queries(queries)
@@ -63,8 +63,9 @@ class DenseRetriever:
             )[0]
 
             top_indices = np.argsort(similarities)[::-1][:top_k]
+            qid = query_ids[i] if query_ids is not None and i < len(query_ids) else f"q{i+1}"
 
-            results[str(i)] = [
+            results[qid] = [
                 {
                     "doc_id": self.doc_ids[idx],
                     "score": float(similarities[idx])
@@ -72,9 +73,8 @@ class DenseRetriever:
                 for idx in top_indices
             ]
 
-            # ✅ Optional debug (only for first few queries)
             if i < 2:
-                logging.info(f"Top results for query {i}: {results[str(i)][:2]}")
+                logging.info(f"Top results for query {qid}: {results[qid][:2]}")
 
         logging.info("Dense retrieval search completed.")
 

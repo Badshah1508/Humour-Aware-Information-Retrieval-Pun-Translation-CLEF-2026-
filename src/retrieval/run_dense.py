@@ -16,7 +16,9 @@ if __name__ == "__main__":
         data = loader.load_all()
 
         corpus = data["corpus"].to_dict(orient="records")
-        query_texts = data["queries"]["query"].astype(str).tolist()
+        queries_df = data["queries"]
+        query_texts = queries_df["query"].astype(str).tolist()
+        query_ids = [f"q{i+1}" for i in range(len(query_texts))]
 
         logging.info(f"Corpus size: {len(corpus)}")
         logging.info(f"Total queries: {len(query_texts)}")
@@ -31,7 +33,7 @@ if __name__ == "__main__":
         retriever.fit(corpus)
 
         logging.info("Running dense retrieval...")
-        results = retriever.search(query_texts, top_k=TOP_K)
+        results = retriever.search(query_texts, top_k=TOP_K, query_ids=query_ids)
 
         output_dir = "results/task1_retrieval/english"
         output_path = f"{output_dir}/dense_results.json"

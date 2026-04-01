@@ -49,8 +49,20 @@ class AdvancedEvaluator:
     def prepare_results(self):
         try:
             results = {}
+            result_entries = []
 
-            for item in self.results_list:
+            if isinstance(self.results_list, dict):
+                for qid, docs in self.results_list.items():
+                    for doc in docs:
+                        result_entries.append({
+                            "query_id": qid,
+                            "doc_id": str(doc["doc_id"]),
+                            "score": float(doc["score"])
+                        })
+            else:
+                result_entries = self.results_list
+
+            for item in result_entries:
                 qid = str(item["query_id"])
                 doc_id = str(item["doc_id"])
                 score = float(item["score"])
