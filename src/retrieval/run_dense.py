@@ -1,6 +1,6 @@
 import json
 import os
-from models.retrieval.embedding_model import EmbeddingModel
+from src.retrieval.embedding_model import EmbeddingModel
 from src.retrieval.dense_retrieval import DenseRetriever
 from src.data.data_loader import DataLoader
 from src.logger import logging
