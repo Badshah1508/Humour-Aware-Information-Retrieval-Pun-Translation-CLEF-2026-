@@ -3,8 +3,8 @@ from src.logger import logging
 
 
 class CrossEncoderReranker:
-    def __init__(self, model_name="cross-encoder/ms-marco-MiniLM-L-6-v2"):
-        logging.info(f"Loading Cross-Encoder model: {model_name}")
+    def __init__(self, model_name="models/reranker/cross_encoder_finetuned"):
+        logging.info(f"Loading Fine-tuned Cross-Encoder model from: {model_name}")
         self.model = CrossEncoder(model_name)
 
     def rerank(self, query, docs):

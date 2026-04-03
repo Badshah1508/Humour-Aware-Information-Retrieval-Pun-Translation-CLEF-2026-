@@ -7,7 +7,12 @@ from src.logger import logging
 
 TASK = "task1_retrieval"
 LANGUAGE = "english"
-TOP_K = 10
+TOP_K = int(os.getenv("DENSE_TOP_K", "100"))
+MODEL_NAME = os.getenv("DENSE_MODEL_NAME", "sentence-transformers/all-mpnet-base-v2")
+SIMILARITY = os.getenv("DENSE_SIMILARITY", "cosine")
+NORMALIZE_EMB = os.getenv("DENSE_NORMALIZE", "true").strip().lower() in {"1", "true", "yes"}
+DENSE_BATCH_SIZE = int(os.getenv("DENSE_BATCH_SIZE", "64"))
+OUTPUT_FILE = os.getenv("DENSE_OUTPUT_FILE", "dense_results.json")
 
 if __name__ == "__main__":
     try:
@@ -23,11 +28,17 @@ if __name__ == "__main__":
         logging.info(f"Corpus size: {len(corpus)}")
         logging.info(f"Total queries: {len(query_texts)}")
 
-        logging.info("Initializing embedding model...")
-        embedding_model = EmbeddingModel()
+        logging.info(
+            f"Initializing embedding model={MODEL_NAME}, normalize={NORMALIZE_EMB}, similarity={SIMILARITY}"
+        )
+        embedding_model = EmbeddingModel(
+            model_name=MODEL_NAME,
+            normalize_embeddings=NORMALIZE_EMB,
+            batch_size=DENSE_BATCH_SIZE,
+        )
 
         logging.info("Initializing dense retriever...")
-        retriever = DenseRetriever(embedding_model)
+        retriever = DenseRetriever(embedding_model, similarity=SIMILARITY)
 
         logging.info("Fitting retriever on corpus...")
         retriever.fit(corpus)
@@ -36,7 +47,7 @@ if __name__ == "__main__":
         results = retriever.search(query_texts, top_k=TOP_K, query_ids=query_ids)
 
         output_dir = "results/task1_retrieval/english"
-        output_path = f"{output_dir}/dense_results.json"
+        output_path = f"{output_dir}/{OUTPUT_FILE}"
         os.makedirs(output_dir, exist_ok=True)
 
         logging.info(f"Saving results to: {output_path}")

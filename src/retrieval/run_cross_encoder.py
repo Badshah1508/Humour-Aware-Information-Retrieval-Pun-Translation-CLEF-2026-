@@ -47,6 +47,10 @@ if __name__ == "__main__":
         logging.info("Loading data...")
         print("[run_cross_encoder] Starting cross-encoder rerank pipeline...")
 
+        max_candidates = int(os.getenv("CROSS_ENCODER_CANDIDATES", "100"))
+        output_file = os.getenv("CROSS_ENCODER_OUTPUT_FILE", "cross_encoder_finetuned_results.json")
+        model_path = os.getenv("CROSS_ENCODER_MODEL_PATH", "models/reranker/cross_encoder_finetuned")
+
         # Load retrieval results with fallback
         try:
             hybrid_results = load_hybrid_results_with_fallback()
@@ -72,7 +76,7 @@ if __name__ == "__main__":
         # Build doc lookup
         corpus_dict = {str(doc["doc_id"]): doc["text"] for doc in corpus}
 
-        reranker = CrossEncoderReranker()
+        reranker = CrossEncoderReranker(model_name=model_path)
 
         final_results = {}
 
@@ -80,7 +84,7 @@ if __name__ == "__main__":
             qid = str(query["query_id"])
             query_text = query["query"]
 
-            docs = hybrid_results.get(qid, [])
+            docs = hybrid_results.get(qid, [])[:max_candidates]
 
             # Attach text
             docs_with_text = [
@@ -89,7 +93,12 @@ if __name__ == "__main__":
                     "text": corpus_dict.get(str(doc["doc_id"]), "")
                 }
                 for doc in docs
+                if corpus_dict.get(str(doc["doc_id"]), "")
             ]
+
+            if not docs_with_text:
+                final_results[qid] = []
+                continue
 
             reranked = reranker.rerank(query_text, docs_with_text)
 
@@ -99,7 +108,7 @@ if __name__ == "__main__":
                 logging.info(f"Sample reranked for query {qid}: {final_results[qid][:2]}")
 
         # Save results
-        output_path = "results/task1_retrieval/english/cross_encoder_results.json"
+        output_path = f"results/task1_retrieval/english/{output_file}"
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
         with open(output_path, "w", encoding="utf-8") as f:

@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
         TASK = "task1_retrieval"
         LANGUAGE = "english"
-        TOP_K = 5
+        TOP_K = int(os.getenv("BASELINE_TOP_K", "100"))
 
         loader = DataLoader(task=TASK, language=LANGUAGE)
         data = loader.load_all()
@@ -148,14 +148,7 @@ if __name__ == "__main__":
         corpus_df = data["corpus"]
         queries_df = data["queries"]
 
-        #  PASTE HERE
-        qrel_doc_ids = set(data["qrels"]["doc_id"].astype(str))
-
-        corpus_df = corpus_df[
-            corpus_df["doc_id"].astype(str).isin(qrel_doc_ids)
-        ].copy()
-
-        print("Filtered corpus size:", len(corpus_df))
+        print("Corpus size:", len(corpus_df))
 
         pre = TextPreprocessor()
 

@@ -31,7 +31,8 @@ if __name__ == "__main__":
         "RM3": "results/task1_retrieval/english/rm3_results.json",
         "Dense": "results/task1_retrieval/english/dense_results.json",
         "Hybrid": "results/task1_retrieval/english/hybrid_results.json",
-        "Cross-Encoder": "results/task1_retrieval/english/cross_encoder_results.json"
+        "Cross-Encoder": "results/task1_retrieval/english/cross_encoder_results.json",
+        "Cross-Encoder-Finetuned": "results/task1_retrieval/english/cross_encoder_finetuned_results.json"
     }
 
     all_results = {}

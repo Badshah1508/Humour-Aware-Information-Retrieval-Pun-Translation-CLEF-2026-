@@ -22,10 +22,15 @@ bm25_results = load_json(bm25_path)
 dense_results = load_json(dense_path)
 
 # Init hybrid
-hybrid = HybridRetriever(alpha=0.5)
+alpha = float(os.getenv("HYBRID_ALPHA", "0.5"))
+fusion_method = os.getenv("HYBRID_FUSION_METHOD", "rrf")
+rrf_k = int(os.getenv("HYBRID_RRF_K", "60"))
+top_k = int(os.getenv("HYBRID_TOP_K", "100"))
+
+hybrid = HybridRetriever(alpha=alpha, fusion_method=fusion_method, rrf_k=rrf_k)
 
 # Fuse
-final_results = hybrid.fuse(bm25_results, dense_results, top_k=10)
+final_results = hybrid.fuse(bm25_results, dense_results, top_k=top_k)
 
 # Save
 output_path = "results/task1_retrieval/english/hybrid_results.json"

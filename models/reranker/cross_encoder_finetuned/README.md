@@ -4,11 +4,50 @@ tags:
 - cross-encoder
 - reranker
 - generated_from_trainer
-- dataset_size:720
+- dataset_size:639
 - loss:BinaryCrossEntropyLoss
 base_model: cross-encoder/ms-marco-MiniLM-L6-v2
 pipeline_tag: text-ranking
 library_name: sentence-transformers
+metrics:
+- accuracy
+- accuracy_threshold
+- f1
+- f1_threshold
+- precision
+- recall
+- average_precision
+model-index:
+- name: CrossEncoder based on cross-encoder/ms-marco-MiniLM-L6-v2
+  results:
+  - task:
+      type: cross-encoder-binary-classification
+      name: Cross Encoder Binary Classification
+    dataset:
+      name: validation
+      type: validation
+    metrics:
+    - type: accuracy
+      value: 0.9861111111111112
+      name: Accuracy
+    - type: accuracy_threshold
+      value: 2.6290690898895264
+      name: Accuracy Threshold
+    - type: f1
+      value: 0.9925925925925926
+      name: F1
+    - type: f1_threshold
+      value: 2.6290690898895264
+      name: F1 Threshold
+    - type: precision
+      value: 0.9852941176470589
+      name: Precision
+    - type: recall
+      value: 1.0
+      name: Recall
+    - type: average_precision
+      value: 0.9988687703578598
+      name: Average Precision
 ---
 
 # CrossEncoder based on cross-encoder/ms-marco-MiniLM-L6-v2
@@ -51,11 +90,11 @@ from sentence_transformers import CrossEncoder
 model = CrossEncoder("cross_encoder_model_id")
 # Get scores for pairs of texts
 pairs = [
-    ['space', 'I thought about studying astronomy for university but I knew I would just be taking up space.'],
-    ['math', 'I strongly dislike the subject of math, however I am partial to fractions.'],
-    ['domestic animal', "They say curiosity killed the cat, and they weren't kitten."],
-    ['tom', "''This is mutiny!'' said Tom bountifully."],
-    ['tom', 'I need to go on a diet, said Tom wastefully.'],
+    ['domestic animal', "Anyone should know how to put a saddle on a horse so it won't slip and cause an injury. It's a cinch."],
+    ['interest', 'He who lends to the poor gets interest from god'],
+    ['tom', "So that's the way the wind blows, said Tom vainly."],
+    ['tom', "'I've got sand in my dinner,'' said Tom grittily."],
+    ['tom', "''What are these berries?'' Tom rasped."],
 ]
 scores = model.predict(pairs)
 print(scores.shape)
@@ -63,13 +102,13 @@ print(scores.shape)
 
 # Or rank different texts based on similarity to a single text
 ranks = model.rank(
-    'space',
+    'domestic animal',
     [
-        'I thought about studying astronomy for university but I knew I would just be taking up space.',
-        'I strongly dislike the subject of math, however I am partial to fractions.',
-        "They say curiosity killed the cat, and they weren't kitten.",
-        "''This is mutiny!'' said Tom bountifully.",
-        'I need to go on a diet, said Tom wastefully.',
+        "Anyone should know how to put a saddle on a horse so it won't slip and cause an injury. It's a cinch.",
+        'He who lends to the poor gets interest from god',
+        "So that's the way the wind blows, said Tom vainly.",
+        "'I've got sand in my dinner,'' said Tom grittily.",
+        "''What are these berries?'' Tom rasped.",
     ]
 )
 # [{'corpus_id': ..., 'score': ...}, {'corpus_id': ..., 'score': ...}, ...]
@@ -99,6 +138,25 @@ You can finetune this model on your own dataset.
 *List how the model may foreseeably be misused and address what users ought not to do with the model.*
 -->
 
+## Evaluation
+
+### Metrics
+
+#### Cross Encoder Binary Classification
+
+* Dataset: `validation`
+* Evaluated with [<code>CEBinaryClassificationEvaluator</code>](https://sbert.net/docs/package_reference/cross_encoder/evaluation.html#sentence_transformers.cross_encoder.evaluation.CEBinaryClassificationEvaluator)
+
+| Metric                | Value      |
+|:----------------------|:-----------|
+| accuracy              | 0.9861     |
+| accuracy_threshold    | 2.6291     |
+| f1                    | 0.9926     |
+| f1_threshold          | 2.6291     |
+| precision             | 0.9853     |
+| recall                | 1.0        |
+| **average_precision** | **0.9989** |
+
 <!--
 ## Bias, Risks and Limitations
 
@@ -117,19 +175,19 @@ You can finetune this model on your own dataset.
 
 #### Unnamed Dataset
 
-* Size: 720 training samples
+* Size: 639 training samples
 * Columns: <code>sentence_0</code>, <code>sentence_1</code>, and <code>label</code>
-* Approximate statistics based on the first 720 samples:
+* Approximate statistics based on the first 639 samples:
   |         | sentence_0                                                                                   | sentence_1                                                                                      | label                                                          |
   |:--------|:---------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------|:---------------------------------------------------------------|
   | type    | string                                                                                       | string                                                                                          | float                                                          |
-  | details | <ul><li>min: 3 characters</li><li>mean: 5.45 characters</li><li>max: 15 characters</li></ul> | <ul><li>min: 19 characters</li><li>mean: 63.86 characters</li><li>max: 353 characters</li></ul> | <ul><li>min: 0.0</li><li>mean: 0.92</li><li>max: 1.0</li></ul> |
+  | details | <ul><li>min: 3 characters</li><li>mean: 5.51 characters</li><li>max: 15 characters</li></ul> | <ul><li>min: 17 characters</li><li>mean: 61.42 characters</li><li>max: 482 characters</li></ul> | <ul><li>min: 0.0</li><li>mean: 0.93</li><li>max: 1.0</li></ul> |
 * Samples:
-  | sentence_0                   | sentence_1                                                                                                 | label            |
-  |:-----------------------------|:-----------------------------------------------------------------------------------------------------------|:-----------------|
-  | <code>space</code>           | <code>I thought about studying astronomy for university but I knew I would just be taking up space.</code> | <code>1.0</code> |
-  | <code>math</code>            | <code>I strongly dislike the subject of math, however I am partial to fractions.</code>                    | <code>1.0</code> |
-  | <code>domestic animal</code> | <code>They say curiosity killed the cat, and they weren't kitten.</code>                                   | <code>1.0</code> |
+  | sentence_0                   | sentence_1                                                                                                         | label            |
+  |:-----------------------------|:-------------------------------------------------------------------------------------------------------------------|:-----------------|
+  | <code>domestic animal</code> | <code>Anyone should know how to put a saddle on a horse so it won't slip and cause an injury. It's a cinch.</code> | <code>1.0</code> |
+  | <code>interest</code>        | <code>He who lends to the poor gets interest from god</code>                                                       | <code>1.0</code> |
+  | <code>tom</code>             | <code>So that's the way the wind blows, said Tom vainly.</code>                                                    | <code>1.0</code> |
 * Loss: [<code>BinaryCrossEntropyLoss</code>](https://sbert.net/docs/package_reference/cross_encoder/losses.html#binarycrossentropyloss) with these parameters:
   ```json
   {
@@ -142,14 +200,15 @@ You can finetune this model on your own dataset.
 #### Non-Default Hyperparameters
 
 - `per_device_train_batch_size`: 16
-- `num_train_epochs`: 1
+- `num_train_epochs`: 5
+- `eval_strategy`: steps
 - `per_device_eval_batch_size`: 16
 
 #### All Hyperparameters
 <details><summary>Click to expand</summary>
 
 - `per_device_train_batch_size`: 16
-- `num_train_epochs`: 1
+- `num_train_epochs`: 5
 - `max_steps`: -1
 - `learning_rate`: 5e-05
 - `lr_scheduler_type`: linear
@@ -190,7 +249,7 @@ You can finetune this model on your own dataset.
 - `disable_tqdm`: False
 - `project`: huggingface
 - `trackio_space_id`: trackio
-- `eval_strategy`: no
+- `eval_strategy`: steps
 - `per_device_eval_batch_size`: 16
 - `prediction_loss_only`: True
 - `eval_on_start`: False
@@ -247,6 +306,16 @@ You can finetune this model on your own dataset.
 - `learning_rate_mapping`: {}
 
 </details>
+
+### Training Logs
+| Epoch | Step | validation_average_precision |
+|:-----:|:----:|:----------------------------:|
+| 1.0   | 40   | 0.9537                       |
+| 2.0   | 80   | 0.9904                       |
+| 3.0   | 120  | 0.9989                       |
+| 4.0   | 160  | 0.9986                       |
+| 5.0   | 200  | 0.9989                       |
+
 
 ### Framework Versions
 - Python: 3.13.5
