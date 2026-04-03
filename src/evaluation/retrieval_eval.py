@@ -89,8 +89,10 @@ class AdvancedEvaluator:
     # Metrics
     # -----------------------------
     def precision_at_k(self, relevant, retrieved, k):
+        if k <= 0:
+            return 0.0
         retrieved_k = [doc for doc, _ in retrieved[:k]]
-        return sum(1 for doc in retrieved_k if doc in relevant) / k
+        return sum(1 for doc in retrieved_k if doc in relevant) / float(k)
 
     def recall_at_k(self, relevant, retrieved, k):
         retrieved_k = [doc for doc, _ in retrieved[:k]]
@@ -126,16 +128,28 @@ class AdvancedEvaluator:
         return 0
 
     def bpref(self, relevant, retrieved):
-        non_rel = 0
-        score = 0
+        # Standard bpref in [0, 1].
+        # For each relevant doc retrieved, penalize by the number of non-relevant
+        # docs seen before it, capped by R (number of relevant docs).
+        r = len(relevant)
+        if r == 0:
+            return 0.0
+
+        non_rel_seen = 0
+        rel_hits = 0
+        score = 0.0
 
         for doc, _ in retrieved:
             if doc in relevant:
-                score += 1 - (non_rel / max(len(relevant), 1))
+                score += 1.0 - (min(non_rel_seen, r) / float(r))
+                rel_hits += 1
             else:
-                non_rel += 1
+                non_rel_seen += 1
 
-        return score / max(len(relevant), 1)
+        if rel_hits == 0:
+            return 0.0
+
+        return score / float(r)
 
     # -----------------------------
     # Evaluate
@@ -144,15 +158,6 @@ class AdvancedEvaluator:
         try:
             qrels = self.prepare_qrels()
             results = self.prepare_results()
-            
-            #  PUT HERE
-            sample_qid = list(qrels.keys())[0]
-
-            print("\n DEBUG CHECK:")
-            print("Qrels docs:", list(qrels[sample_qid].keys())[:5])
-            print("Results docs:", [d for d, _ in results.get(sample_qid, [])])
-
-            print("Total queries in qrels:", len(qrels))
 
             if len(qrels) == 0:
                 raise ValueError("No valid queries found in qrels!")

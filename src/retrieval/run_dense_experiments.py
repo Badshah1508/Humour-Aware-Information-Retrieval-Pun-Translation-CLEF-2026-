@@ -26,6 +26,8 @@ def run_dense_variant(
     normalize_embeddings: bool,
     similarity: str,
     output_file: str,
+    query_prefix: str = "",
+    doc_prefix: str = "",
 ):
     logging.info(
         f"Running dense variant model={model_name}, normalize={normalize_embeddings}, similarity={similarity}"
@@ -35,6 +37,8 @@ def run_dense_variant(
         model_name=model_name,
         normalize_embeddings=normalize_embeddings,
         batch_size=DENSE_BATCH_SIZE,
+        query_prefix=query_prefix,
+        doc_prefix=doc_prefix,
     )
     retriever = DenseRetriever(embedding_model, similarity=similarity)
 
@@ -94,6 +98,8 @@ if __name__ == "__main__":
             "normalize_embeddings": True,
             "similarity": "dot",
             "output_file": "dense_results_e5_dot.json",
+            "query_prefix": "query: ",
+            "doc_prefix": "passage: ",
         },
     ]
 
@@ -108,6 +114,8 @@ if __name__ == "__main__":
             normalize_embeddings=exp["normalize_embeddings"],
             similarity=exp["similarity"],
             output_file=exp["output_file"],
+            query_prefix=exp.get("query_prefix", ""),
+            doc_prefix=exp.get("doc_prefix", ""),
         )
 
         metrics = evaluate_results(qrels_df, results)

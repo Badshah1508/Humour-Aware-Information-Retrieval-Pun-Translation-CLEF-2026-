@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from collections import defaultdict
 from src.retrieval.cross_encoder_reranker import CrossEncoderReranker
 from src.data.data_loader import DataLoader
 from src.logger import logging
@@ -42,6 +43,56 @@ def load_hybrid_results_with_fallback(base_path="results/task1_retrieval/english
     raise FileNotFoundError(f"No retrieval results found in {base_path}")
 
 
+def resolve_model_path(model_path):
+    """Resolve common nested save structure after fine-tuning."""
+    if os.path.isdir(model_path):
+        nested = os.path.join(model_path, "cross_encoder_finetuned")
+        if os.path.isdir(nested) and os.path.exists(os.path.join(nested, "config.json")):
+            return nested
+
+    return model_path
+
+
+def _to_dict_results(results_obj):
+    if isinstance(results_obj, dict):
+        return {str(k): v for k, v in results_obj.items()}
+
+    grouped = defaultdict(list)
+    for item in results_obj:
+        grouped[str(item["query_id"])].append(
+            {"doc_id": str(item["doc_id"]), "score": float(item["score"])}
+        )
+    return dict(grouped)
+
+
+def merge_candidate_results(result_sets, max_candidates):
+    """Merge result sets per query while keeping best score seen for each doc."""
+    merged = {}
+
+    for result_set in result_sets:
+        current = _to_dict_results(result_set)
+        for qid, docs in current.items():
+            if qid not in merged:
+                merged[qid] = {}
+
+            for rank, doc in enumerate(docs, start=1):
+                doc_id = str(doc["doc_id"])
+                score = float(doc.get("score", 0.0))
+
+                # Blend score and reciprocal-rank hint to stabilize mixed sources.
+                fused_score = score + (1.0 / (60.0 + rank))
+
+                if doc_id not in merged[qid] or fused_score > merged[qid][doc_id]:
+                    merged[qid][doc_id] = fused_score
+
+    merged_lists = {}
+    for qid, doc_scores in merged.items():
+        ranked = sorted(doc_scores.items(), key=lambda x: x[1], reverse=True)[:max_candidates]
+        merged_lists[qid] = [{"doc_id": doc_id, "score": score} for doc_id, score in ranked]
+
+    return merged_lists
+
+
 if __name__ == "__main__":
     try:
         logging.info("Loading data...")
@@ -54,6 +105,14 @@ if __name__ == "__main__":
         # Load retrieval results with fallback
         try:
             hybrid_results = load_hybrid_results_with_fallback()
+            dense_results = load_json("results/task1_retrieval/english/dense_results.json") if os.path.exists("results/task1_retrieval/english/dense_results.json") else {}
+            bm25_results = load_json("results/task1_retrieval/english/bm25_results.json") if os.path.exists("results/task1_retrieval/english/bm25_results.json") else {}
+            rm3_results = load_json("results/task1_retrieval/english/rm3_results.json") if os.path.exists("results/task1_retrieval/english/rm3_results.json") else {}
+
+            hybrid_results = merge_candidate_results(
+                [hybrid_results, dense_results, bm25_results, rm3_results],
+                max_candidates=max_candidates,
+            )
         except FileNotFoundError as e:
             print(f"[run_cross_encoder] ERROR: {e}")
             logging.error(str(e))
@@ -76,7 +135,9 @@ if __name__ == "__main__":
         # Build doc lookup
         corpus_dict = {str(doc["doc_id"]): doc["text"] for doc in corpus}
 
-        reranker = CrossEncoderReranker(model_name=model_path)
+        resolved_model_path = resolve_model_path(model_path)
+        print(f"[run_cross_encoder] Using model path: {resolved_model_path}")
+        reranker = CrossEncoderReranker(model_name=resolved_model_path)
 
         final_results = {}
 

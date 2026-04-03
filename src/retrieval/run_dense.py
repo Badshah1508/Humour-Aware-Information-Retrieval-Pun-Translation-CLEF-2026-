@@ -13,6 +13,8 @@ SIMILARITY = os.getenv("DENSE_SIMILARITY", "cosine")
 NORMALIZE_EMB = os.getenv("DENSE_NORMALIZE", "true").strip().lower() in {"1", "true", "yes"}
 DENSE_BATCH_SIZE = int(os.getenv("DENSE_BATCH_SIZE", "64"))
 OUTPUT_FILE = os.getenv("DENSE_OUTPUT_FILE", "dense_results.json")
+QUERY_PREFIX = os.getenv("DENSE_QUERY_PREFIX", "")
+DOC_PREFIX = os.getenv("DENSE_DOC_PREFIX", "")
 
 if __name__ == "__main__":
     try:
@@ -35,6 +37,8 @@ if __name__ == "__main__":
             model_name=MODEL_NAME,
             normalize_embeddings=NORMALIZE_EMB,
             batch_size=DENSE_BATCH_SIZE,
+            query_prefix=QUERY_PREFIX,
+            doc_prefix=DOC_PREFIX,
         )
 
         logging.info("Initializing dense retriever...")
