@@ -21,6 +21,7 @@ def load_json(path):
 def load_hybrid_results_with_fallback(base_path="results/task1_retrieval/english"):
     """Load hybrid results with fallback to other retrieval methods."""
     candidates = [
+        os.path.join(base_path, "hybrid_results_tuned.json"),
         os.path.join(base_path, "hybrid_results.json"),
         os.path.join(base_path, "dense_results.json"),
         os.path.join(base_path, "bm25_results.json"),
@@ -46,6 +47,11 @@ def load_hybrid_results_with_fallback(base_path="results/task1_retrieval/english
 def resolve_model_path(model_path):
     """Resolve common nested save structure after fine-tuning."""
     if os.path.isdir(model_path):
+        root_config = os.path.join(model_path, "config.json")
+        # Prefer root when available (newer sentence-transformers saves here).
+        if os.path.exists(root_config):
+            return model_path
+
         nested = os.path.join(model_path, "cross_encoder_finetuned")
         if os.path.isdir(nested) and os.path.exists(os.path.join(nested, "config.json")):
             return nested
@@ -101,6 +107,7 @@ if __name__ == "__main__":
         max_candidates = int(os.getenv("CROSS_ENCODER_CANDIDATES", "100"))
         output_file = os.getenv("CROSS_ENCODER_OUTPUT_FILE", "cross_encoder_finetuned_results.json")
         model_path = os.getenv("CROSS_ENCODER_MODEL_PATH", "models/reranker/cross_encoder_finetuned")
+        query_split = os.getenv("RETRIEVAL_QUERY_SPLIT", "all")
 
         # Load retrieval results with fallback
         try:
@@ -122,8 +129,9 @@ if __name__ == "__main__":
         try:
             loader = DataLoader(task="task1_retrieval", language="english")
             corpus_df = loader.load_corpus()
-            queries_df = loader.load_queries()
+            queries_df = loader.load_queries(split=query_split)
             print(f"[run_cross_encoder] Corpus loaded: {len(corpus_df)} docs, queries loaded: {len(queries_df)}")
+            print(f"[run_cross_encoder] Query split: {query_split}")
         except Exception as e:
             print(f"[run_cross_encoder] ERROR loading data: {e}")
             logging.error(f"Failed to load corpus/queries: {e}")

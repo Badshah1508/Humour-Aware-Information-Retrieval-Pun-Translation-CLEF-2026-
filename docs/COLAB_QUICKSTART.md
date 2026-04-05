@@ -12,6 +12,41 @@ Use this for GPU-heavy steps only.
 1. Open a new Colab notebook and enable GPU runtime.
 2. Run the notebook in `notebooks/colab_clef_pipeline.ipynb` from this repository.
 
+## Run Dense Experiments In Colab (with Drive export)
+
+Use this when `src/retrieval/run_dense_experiments.py` is too slow locally.
+
+```python
+# In Colab cell
+!git clone https://github.com/Badshah1508/Humour-Aware-Information-Retrieval-Pun-Translation-CLEF-2026-.git
+%cd Humour-Aware-Information-Retrieval-Pun-Translation-CLEF-2026-
+!pip install -r requirements.txt
+```
+
+```python
+# Optional tuning knobs for Colab GPU
+import os
+os.environ["RETRIEVAL_QUERY_SPLIT"] = "all"
+os.environ["DENSE_BATCH_SIZE"] = "128"  # try 192/256 if memory allows
+```
+
+```python
+# Runs dense experiments + exports output files to Google Drive
+!python scripts/colab_run_dense_experiments.py
+```
+
+Outputs are exported to:
+
+- `MyDrive/CLEF_2026_Humour_Project/dense_experiments_<timestamp>/`
+
+Export includes:
+
+- `dense_experiment_metrics.csv`
+- `dense_results_minilm_cosine.json`
+- `dense_results_mpnet_cosine.json`
+- `dense_results_bge_dot.json`
+- `dense_results_e5_dot.json`
+
 ## One-command profile runner
 
 From repo root:

@@ -141,14 +141,17 @@ if __name__ == "__main__":
         TASK = "task1_retrieval"
         LANGUAGE = "english"
         TOP_K = int(os.getenv("BASELINE_TOP_K", "100"))
+        QUERY_SPLIT = os.getenv("RETRIEVAL_QUERY_SPLIT", "all")
 
         loader = DataLoader(task=TASK, language=LANGUAGE)
-        data = loader.load_all()
+        data = loader.load_all(query_split=QUERY_SPLIT)
 
         corpus_df = data["corpus"]
         queries_df = data["queries"]
 
         print("Corpus size:", len(corpus_df))
+        print("Query split:", QUERY_SPLIT)
+        print("Total queries:", len(queries_df))
 
         pre = TextPreprocessor()
 

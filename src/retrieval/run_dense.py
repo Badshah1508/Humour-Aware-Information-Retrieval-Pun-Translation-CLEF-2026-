@@ -15,12 +15,13 @@ DENSE_BATCH_SIZE = int(os.getenv("DENSE_BATCH_SIZE", "64"))
 OUTPUT_FILE = os.getenv("DENSE_OUTPUT_FILE", "dense_results.json")
 QUERY_PREFIX = os.getenv("DENSE_QUERY_PREFIX", "")
 DOC_PREFIX = os.getenv("DENSE_DOC_PREFIX", "")
+QUERY_SPLIT = os.getenv("RETRIEVAL_QUERY_SPLIT", "all")
 
 if __name__ == "__main__":
     try:
         logging.info("Loading corpus and query data via DataLoader...")
         loader = DataLoader(task=TASK, language=LANGUAGE)
-        data = loader.load_all()
+        data = loader.load_all(query_split=QUERY_SPLIT)
 
         corpus = data["corpus"].to_dict(orient="records")
         queries_df = data["queries"]
@@ -28,6 +29,7 @@ if __name__ == "__main__":
         query_ids = queries_df["query_id"].astype(str).tolist()
 
         logging.info(f"Corpus size: {len(corpus)}")
+        logging.info(f"Query split: {QUERY_SPLIT}")
         logging.info(f"Total queries: {len(query_texts)}")
 
         logging.info(

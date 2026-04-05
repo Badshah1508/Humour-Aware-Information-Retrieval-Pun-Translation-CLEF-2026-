@@ -77,6 +77,10 @@ def load_candidate_pool(result_paths):
                 merged[str(qid)].append({"doc_id": doc_id, "score": float(doc.get("score", 0.0))})
                 seen.add(doc_id)
 
+    # Prioritize harder negatives by score.
+    for qid in merged:
+        merged[qid] = sorted(merged[qid], key=lambda x: float(x.get("score", 0.0)), reverse=True)
+
     return merged
 
 
@@ -94,11 +98,13 @@ if __name__ == "__main__":
     max_random_negs = int(os.getenv("CE_MAX_RANDOM_NEGS", "10"))
     ce_num_workers = int(os.getenv("CE_NUM_WORKERS", "0"))
     ce_pin_memory = os.getenv("CE_PIN_MEMORY", "auto").strip().lower()
+    query_split = os.getenv("RETRIEVAL_QUERY_SPLIT", "all").strip().lower()
+    val_ratio = float(os.getenv("CE_VAL_RATIO", "0.1"))
 
     logging.info("Loading data...")
 
     loader = ProjectDataLoader(task="task1_retrieval", language="english")
-    data = loader.load_all()
+    data = loader.load_all(query_split=query_split)
 
     corpus_dict = {
         str(row["doc_id"]): str(row["text"])
@@ -112,6 +118,7 @@ if __name__ == "__main__":
 
     qrels_dict = build_qrels_dict(data["qrels"])
     candidate_files = [
+        "results/task1_retrieval/english/hybrid_results_tuned.json",
         "results/task1_retrieval/english/hybrid_results.json",
         "results/task1_retrieval/english/dense_results.json",
         "results/task1_retrieval/english/bm25_results.json",
@@ -126,6 +133,7 @@ if __name__ == "__main__":
     random_negative_count = 0
 
     logging.info("Creating samples with multi-source hard negatives + random negatives...")
+    logging.info(f"Using query split: {query_split}")
 
     for qid, relevant_docs in qrels_dict.items():
         query_text = query_dict.get(qid)
@@ -200,7 +208,7 @@ if __name__ == "__main__":
     # =========================
     train_samples, val_samples = train_test_split(
         training_samples,
-        test_size=0.1,
+        test_size=val_ratio,
         random_state=42
     )
 

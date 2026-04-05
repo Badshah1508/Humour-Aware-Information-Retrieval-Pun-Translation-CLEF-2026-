@@ -13,12 +13,13 @@ TASK = "task1_retrieval"
 LANGUAGE = "english"
 RESULT_DIR = "results/task1_retrieval/english"
 TOP_K = int(os.getenv("HYBRID_TOP_K", "100"))
+QUERY_SPLIT = os.getenv("RETRIEVAL_QUERY_SPLIT", "all")
 
 BM25_FILE = os.getenv("HYBRID_TUNE_BM25_FILE", "bm25_results.json")
 DENSE_FILE = os.getenv("HYBRID_TUNE_DENSE_FILE", "dense_results.json")
 
-ALPHAS = [float(x) for x in os.getenv("HYBRID_TUNE_ALPHAS", "0.2,0.3,0.4,0.5,0.6,0.7,0.8").split(",")]
-RRF_KS = [int(x) for x in os.getenv("HYBRID_TUNE_RRF_KS", "10,30,60,90").split(",")]
+ALPHAS = [float(x) for x in os.getenv("HYBRID_TUNE_ALPHAS", "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9").split(",")]
+RRF_KS = [int(x) for x in os.getenv("HYBRID_TUNE_RRF_KS", "10,30,60,90,120").split(",")]
 METHODS = [x.strip().lower() for x in os.getenv("HYBRID_TUNE_METHODS", "rrf,score").split(",")]
 
 METRIC = os.getenv("HYBRID_TUNE_METRIC", "nDCG@5")
@@ -34,9 +35,16 @@ def load_json(path):
 def main():
     loader = DataLoader(task=TASK, language=LANGUAGE)
     qrels_df = loader.load_qrels()
+    queries_df = loader.load_queries(split=QUERY_SPLIT)
+    valid_qids = set(queries_df["query_id"].astype(str).tolist())
+
+    # Keep qrels aligned with requested split (e.g., all/train/test).
+    qrels_df = qrels_df[qrels_df["query_id"].astype(str).isin(valid_qids)].copy()
 
     bm25_results = load_json(os.path.join(RESULT_DIR, BM25_FILE))
     dense_results = load_json(os.path.join(RESULT_DIR, DENSE_FILE))
+
+    print(f"Tuning hybrid with query split: {QUERY_SPLIT} | qrels queries: {qrels_df['query_id'].nunique()}")
 
     rows = []
     best_score = float("-inf")

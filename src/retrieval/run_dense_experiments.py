@@ -16,6 +16,7 @@ LANGUAGE = "english"
 TOP_K = int(os.getenv("DENSE_EXPERIMENT_TOP_K", "100"))
 OUT_DIR = "results/task1_retrieval/english"
 DENSE_BATCH_SIZE = int(os.getenv("DENSE_BATCH_SIZE", "64"))
+QUERY_SPLIT = os.getenv("RETRIEVAL_QUERY_SPLIT", "all")
 
 
 def run_dense_variant(
@@ -61,7 +62,7 @@ def evaluate_results(qrels_df, results) -> Dict[str, float]:
 
 if __name__ == "__main__":
     loader = DataLoader(task=TASK, language=LANGUAGE)
-    data = loader.load_all()
+    data = loader.load_all(query_split=QUERY_SPLIT)
 
     corpus = data["corpus"].to_dict(orient="records")
     queries_df = data["queries"]
@@ -69,6 +70,7 @@ if __name__ == "__main__":
 
     query_texts = queries_df["query"].astype(str).tolist()
     query_ids = queries_df["query_id"].astype(str).tolist()
+    logging.info(f"Query split: {QUERY_SPLIT} | Total queries: {len(query_ids)}")
 
     experiments: List[Dict] = [
         {

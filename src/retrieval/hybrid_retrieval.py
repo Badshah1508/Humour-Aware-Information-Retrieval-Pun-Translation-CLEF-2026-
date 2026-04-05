@@ -22,10 +22,10 @@ class HybridRetriever:
         if isinstance(results, list):
             grouped = defaultdict(list)
             for item in results:
-                qid = item.get("query_id") or item.get("qid")
+                qid = str(item.get("query_id") or item.get("qid"))
                 grouped[qid].append({
-                    "doc_id": item["doc_id"],
-                    "score": item["score"]
+                    "doc_id": str(item["doc_id"]),
+                    "score": float(item["score"])
                 })
             results = grouped
 
@@ -49,11 +49,11 @@ class HybridRetriever:
                     norm_score = (doc["score"] - min_s) / (max_s - min_s)
 
                 norm_docs.append({
-                    "doc_id": doc["doc_id"],
-                    "score": norm_score
+                    "doc_id": str(doc["doc_id"]),
+                    "score": float(norm_score)
                 })
 
-            normalized[qid] = norm_docs
+            normalized[str(qid)] = norm_docs
 
         return normalized
 
@@ -83,7 +83,7 @@ class HybridRetriever:
         dense_ranks = self._to_rank_dict(dense_results)
 
         final_results = {}
-        all_qids = set(bm25_ranks) | set(dense_ranks)
+        all_qids = sorted(set(bm25_ranks) | set(dense_ranks))
 
         for qid in all_qids:
             score_dict = defaultdict(float)
@@ -108,7 +108,7 @@ class HybridRetriever:
         dense_norm = self.normalize(dense_results)
 
         final_results = {}
-        all_qids = set(bm25_norm) | set(dense_norm)
+        all_qids = sorted(set(bm25_norm) | set(dense_norm))
 
         for qid in all_qids:
             score_dict = defaultdict(float)

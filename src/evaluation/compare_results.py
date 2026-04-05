@@ -17,8 +17,19 @@ def evaluate_model(results_path):
     loader = DataLoader(task="task1_retrieval", language="english")
     qrels_df = loader.load_qrels()
 
+    qrels_query_ids = set(qrels_df["query_id"].astype(str).tolist())
+    if isinstance(results, dict):
+        result_query_ids = set(str(qid) for qid in results.keys())
+    else:
+        result_query_ids = set(str(row["query_id"]) for row in results)
+
+    overlap = len(qrels_query_ids & result_query_ids)
+
     evaluator = AdvancedEvaluator(qrels_df, results)
     metrics = evaluator.evaluate()
+    metrics["ResultQueries"] = len(result_query_ids)
+    metrics["LabeledQueries"] = len(qrels_query_ids)
+    metrics["LabeledQueryCoverage"] = overlap / max(len(qrels_query_ids), 1)
 
     return metrics
 

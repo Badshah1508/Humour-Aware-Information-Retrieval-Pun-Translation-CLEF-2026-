@@ -100,33 +100,54 @@ class DataLoader:
     # -----------------------------
     # Load Queries
     # -----------------------------
-    def load_queries(self):
-        try:
-            # 🔥 ALWAYS use train queries (to match qrels)
-            query_file = None
+    def _resolve_query_files(self, split):
+        split = str(split or "train").strip().lower()
 
-            for f in self.files:
-                if "queries_train" in f.lower():
-                    query_file = f
-                    break
+        train_files = [f for f in self.files if "queries_train" in f.lower()]
+        test_files = [f for f in self.files if "queries_test" in f.lower()]
 
-            if query_file is None:
+        if split == "train":
+            if not train_files:
                 raise FileNotFoundError("queries_train file not found")
+            return train_files
 
-            data = self.load_json(query_file)
+        if split == "test":
+            if not test_files:
+                raise FileNotFoundError("queries_test file not found")
+            return test_files
 
-            queries = [
-                {
-                    "query_id": str(item.get("id") or item.get("qid")),
-                    "query": item.get("text") or item.get("query")
-                }
-                for item in data
-            ]
+        if split == "all":
+            files = train_files + test_files
+            if not files:
+                raise FileNotFoundError("No train/test query files found")
+            return files
 
-            df = pd.DataFrame(queries)
+        raise ValueError("Invalid query split. Use one of: train, test, all")
 
-            print(f"\n✅ Using query file: {query_file}")
-            print("Total queries:", df.shape[0])
+    def load_queries(self, split="train"):
+        try:
+            query_files = self._resolve_query_files(split=split)
+
+            queries = []
+            for query_file in query_files:
+                data = self.load_json(query_file)
+                for item in data:
+                    qid = item.get("id") or item.get("qid")
+                    qtext = item.get("text") or item.get("query")
+
+                    if qid is None or qtext is None:
+                        continue
+
+                    queries.append({
+                        "query_id": str(qid),
+                        "query": str(qtext)
+                    })
+
+            df = pd.DataFrame(queries).drop_duplicates(subset=["query_id"], keep="first")
+
+            print(f"\n Using query split: {str(split).lower()}")
+            print(f"Query files: {query_files}")
+            print("Total unique queries:", df.shape[0])
 
             return df
 
@@ -172,7 +193,7 @@ class DataLoader:
 
             df = pd.DataFrame(qrels_list)
 
-            print("\n✅ Qrels Loaded:")
+            print("\n Qrels Loaded:")
             print("Total rows:", len(df))
             print("Unique queries:", df["query_id"].nunique())
 
@@ -186,11 +207,11 @@ class DataLoader:
     # Load Everything
     # -----------------------------
 
-    def load_all(self):
+    def load_all(self, query_split="train"):
         try:
             return {
                 "corpus": self.load_corpus(),
-                "queries": self.load_queries(),
+                "queries": self.load_queries(split=query_split),
                 "qrels": self.load_qrels()
             }
         except Exception as e:
