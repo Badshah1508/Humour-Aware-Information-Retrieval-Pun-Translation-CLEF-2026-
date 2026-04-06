@@ -44,8 +44,7 @@ if __name__ == "__main__":
         "Dense-Minilm-Cosine": "results/task1_retrieval/english/dense_results_minilm_cosine.json",
         "Hybrid": "results/task1_retrieval/english/hybrid_results.json",
         "Hybrid-Tuned": "results/task1_retrieval/english/hybrid_results_tuned.json",
-        "Cross-Encoder": "results/task1_retrieval/english/cross_encoder_results.json",
-        "Cross-Encoder-Finetuned": "results/task1_retrieval/english/cross_encoder_finetuned_results.json"
+        "Cross-Encoder": "results/task1_retrieval/english/cross_encoder_finetuned_results.json"
     }
 
     all_results = {}
