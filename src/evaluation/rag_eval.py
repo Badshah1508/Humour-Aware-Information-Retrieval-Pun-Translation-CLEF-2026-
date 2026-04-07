@@ -63,7 +63,7 @@ def build_text_lookup(corpus_df):
     }
 
 
-def apply_rag(query_group, rag, doc_text_lookup, query_text_lookup):
+def apply_rag(query_group, rag, doc_text_lookup, query_text_lookup, strict_llm=False):
     rag_results_list = []
     llm_used_queries = 0
     total_queries = 0
@@ -97,6 +97,10 @@ def apply_rag(query_group, rag, doc_text_lookup, query_text_lookup):
             rag_output = rag.rerank(query_text, formatted_docs)
 
             if not rag_output:
+                if strict_llm:
+                    raise RuntimeError(
+                        f"RAG returned empty output for query {qid} in strict LLM mode."
+                    )
                 # If LLM failed/parsing failed, keep original ranking for this query.
                 for doc in docs:
                     rag_results_list.append({
@@ -128,6 +132,8 @@ def apply_rag(query_group, rag, doc_text_lookup, query_text_lookup):
                 })
 
         except Exception as e:
+            if strict_llm:
+                raise
             print(f"RAG failed for query {qid}: {e}")
             for doc in docs:
                 rag_results_list.append({
@@ -170,12 +176,19 @@ if __name__ == "__main__":
         results_list = load_results(results_path)
 
         #  Initialize RAG
+        STRICT_LLM_RERANK = True
+
         rag = RAGReranker(
             model_name="phi3:mini",
             stage1_pool_size=10,
             stage1_top_k=5,
             stage2_top_k=3,
+            require_backend=STRICT_LLM_RERANK,
         )
+
+        if STRICT_LLM_RERANK:
+            print("Strict LLM mode enabled: run will fail if Ollama/model is unavailable.")
+            rag.ensure_backend()
 
         #  Group by query
         query_group = group_by_query(results_list)
@@ -192,6 +205,7 @@ if __name__ == "__main__":
             rag=rag,
             doc_text_lookup=doc_text_lookup,
             query_text_lookup=query_text_lookup,
+            strict_llm=STRICT_LLM_RERANK,
         )
 
         output_results_path = os.path.join(
