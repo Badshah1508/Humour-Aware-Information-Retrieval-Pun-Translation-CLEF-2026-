@@ -1,4 +1,5 @@
 import json
+import os
 import pandas as pd
 from src.logger import logging
 from src.evaluation.retrieval_eval import AdvancedEvaluator
@@ -46,6 +47,10 @@ if __name__ == "__main__":
         "Hybrid-Tuned": "results/task1_retrieval/english/hybrid_results_tuned.json",
         "Cross-Encoder": "results/task1_retrieval/english/cross_encoder_finetuned_results.json"
     }
+
+    rag_path = "results/task1_retrieval/english/cross_encoder_finetuned_rag_results.json"
+    if os.path.exists(rag_path):
+        models["Cross-Encoder+RAG"] = rag_path
 
     all_results = {}
 
