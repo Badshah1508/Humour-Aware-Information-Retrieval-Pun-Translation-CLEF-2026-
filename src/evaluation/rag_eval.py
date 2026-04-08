@@ -161,8 +161,8 @@ if __name__ == "__main__":
         qrels_df = data["qrels"]
         qrels_df["relevance"] = qrels_df["relevance"].fillna(0)
 
-        # RESULT_FILE = "rm3_results.json"
-        RESULT_FILE = "cross_encoder_finetuned_results.json"
+        RESULT_FILE = "rm3_results.json"
+        # RESULT_FILE = "cross_encoder_finetuned_results.json"
         output_result_file = build_rag_output_name(RESULT_FILE)
         output_metrics_file = output_result_file.replace(".json", "_metrics.csv")
 
